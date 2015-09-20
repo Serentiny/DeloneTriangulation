@@ -5,8 +5,8 @@
 
 struct vertex
 {
-	double x, y, natural;	//координаты и знак, абстрактная ли эта точка
-	int link;				//ссылка на точно такую же вершину в предыдущей триангуляции
+	double x, y, natural;	//coord and a sign, which is responsible for the abstraction this point
+	int link;				//link to similat point in previous triangulation
 	std::vector<int> triangles_id;
 
 	vertex() :
@@ -57,11 +57,11 @@ struct vertex
 
 struct triangle
 {
-	//номер вершины в массиве
-	//стараемся поддерживать инвариант: точки лежат по ходу часовой стрелки
+	//point id in array
+	//let make a rule: poinnt are clockwise in triangle
 	int p1, p2, p3;
 
-	//номер треугольника в массиве(который лежит напротив одноименной точки)
+	//id of opposite triangle in array (which lie over against a point)
 	int ot1, ot2, ot3;
 
 	triangle() :
@@ -103,8 +103,8 @@ struct triangle
 
 struct DTriangle
 {
-	std::vector<vertex>   set_points;		//набор всех точек
-	std::vector<triangle> set_triangles;	//набор всех треугольников
+	std::vector<vertex>   set_points;		//set of all points
+	std::vector<triangle> set_triangles;	//set of all triangles
 
 	DTriangle()
 	{

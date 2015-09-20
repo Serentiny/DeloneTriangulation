@@ -10,7 +10,7 @@ void delaunay_test(DTriangle &DT, std::vector<std::pair<int, int>> &queue)
 		if (t.p1 == queue[i].second)		{ov = take_last(DT.set_triangles[t.ot1], t.p2, t.p3); ot = t.ot1; v1 = t.p2; v2 = t.p3;}
 		else if (t.p1 == queue[i].second)	{ov = take_last(DT.set_triangles[t.ot2], t.p3, t.p1); ot = t.ot2; v1 = t.p3; v2 = t.p1;}
 		else								{ov = take_last(DT.set_triangles[t.ot3], t.p1, t.p2); ot = t.ot3; v1 = t.p1; v2 = t.p2;}
-		//кстати, вдруг, одна из вершин абстрактна - проверим, и если надо - исправим
+		//if one of points is abstract - correct it
 		if (!v1 || !v2)
 		{
 			if (!v2)
@@ -31,7 +31,7 @@ void delaunay_test(DTriangle &DT, std::vector<std::pair<int, int>> &queue)
 			}
 			continue;
 		}
-		//если четвертая точка вошла в описанную окружность, то делаем флип, и заносим два ребра снова в очередь на проверку
+		//if forth point belong to circumcircle too - make flip, and push two edge in stack to test again
 		if (delaunay_factor(DT.set_points[ov], DT.set_points[t.p1], DT.set_points[t.p2], DT.set_points[t.p3]) < 0)
 		{
 			flip(DT, queue[i].first, ot, queue[i].second, v1, ov, v2);
@@ -47,7 +47,7 @@ void add_point_to_edge(DTriangle &DT, const vertex &q, int t1, int t2, int vr, c
 	auto tot = take_other_two(DT.set_triangles[t1], vr);
 	vd = tot.first; vu = tot.second; vl = take_last(DT.set_triangles[t2], vu, vd);
 
-	//запоминаем, какие соседи, по часовой стрелке, у наших треугольников есть
+	//Keep in mind, which neighbours our triangles have by clockwise
 	int ot_1, ot_2, ot_3, ot_4;
 	if (DT.set_triangles[t1].ot1 == t2)			{ot_4 = DT.set_triangles[t1].ot2; ot_1 = DT.set_triangles[t1].ot3;}
 	else if (DT.set_triangles[t1].ot2 == t2)	{ot_4 = DT.set_triangles[t1].ot3; ot_1 = DT.set_triangles[t1].ot1;}
@@ -55,16 +55,16 @@ void add_point_to_edge(DTriangle &DT, const vertex &q, int t1, int t2, int vr, c
 	if (DT.set_triangles[t2].ot1 == t1)			{ot_2 = DT.set_triangles[t2].ot2; ot_3 = DT.set_triangles[t2].ot3;}
 	else if (DT.set_triangles[t2].ot2 == t1)	{ot_2 = DT.set_triangles[t2].ot3; ot_3 = DT.set_triangles[t2].ot1;}
 	else										{ot_2 = DT.set_triangles[t2].ot1; ot_3 = DT.set_triangles[t2].ot2;}
-	//зафиксируем количество треугольником, чтобы было чуть проще с добавлением
+	//save quantity of triangles in triangulation
 	int DTst_size = DT.set_triangles.size();
-	//меняем/добавляем треугольники, прикручиваем правильных соседей
+	//change/add traingles, make "right" neighbours
 	DT.set_triangles[t2] = triangle(DT.set_points.size(), vl, vu, ot_3, t1, DTst_size + 1);
 	DT.set_triangles[t1] = triangle(DT.set_points.size(), vu, vr, ot_4, DTst_size, t2);
 	DT.set_triangles.push_back(triangle(DT.set_points.size(), vr, vd, ot_1, DTst_size + 1, t1));
 	DT.set_triangles.push_back(triangle(DT.set_points.size(), vd, vl, ot_2, t2, DTst_size));
-	//все это время мы ссылались на недоступную вершину - создадим ее
+	//All that time we got an uncreated point. Let create it
 	DT.set_points.push_back(vertex(q));
-	//теперь добавим соседей точке которую добавили, и остальным, которые учавствовали
+	//Now add neighbours to points that we added and for other that take part in it
 	DT.set_points.back().triangles_id.push_back(t1);
 	DT.set_points.back().triangles_id.push_back(t2);
 	DT.set_points.back().triangles_id.push_back(DTst_size);
@@ -79,24 +79,24 @@ void add_point_to_edge(DTriangle &DT, const vertex &q, int t1, int t2, int vr, c
 		if (DT.set_points[vd].triangles_id[i] == t2)
 			DT.set_points[vd].triangles_id[i] = DTst_size + 1;
 	}
-	//на старый треугольник ссылались его старые соседи. Двум повезло и им ничего не изменяем
+	//there were links on old triangle by his neighbours. Two are lucky - they are unchanged
 	if (DT.set_triangles[ot_1].ot1 == t1)		DT.set_triangles[ot_1].ot1 = DTst_size;
 	else if (DT.set_triangles[ot_1].ot2 == t1)	DT.set_triangles[ot_1].ot2 = DTst_size;
 	else										DT.set_triangles[ot_1].ot3 = DTst_size;
 	if (DT.set_triangles[ot_2].ot1 == t2)		DT.set_triangles[ot_2].ot1 = DTst_size + 1;
 	else if (DT.set_triangles[ot_2].ot2 == t2)	DT.set_triangles[ot_2].ot2 = DTst_size + 1;
 	else										DT.set_triangles[ot_2].ot3 = DTst_size + 1;
-	//создадим очередь из пар: номер треугольника на проверку, и номер вершины, ребро напротив которой мы изменяем
+	//create a queue of pairs: id of triangle to test and id of point opposite to edge which we are changing
 	std::vector<std::pair<int, int>> queue;
 	queue.push_back(std::pair<int, int> (t1, DT.set_points.size() - 1));
 	queue.push_back(std::pair<int, int> (t2, DT.set_points.size() - 1));
 	queue.push_back(std::pair<int, int> (DTst_size, DT.set_points.size() - 1));
 	queue.push_back(std::pair<int, int> (DTst_size + 1, DT.set_points.size() - 1));
-	//теперь начнем перепроверять все ребра на условие Делоне
+	//Now let test all edges on Delone condition
 	delaunay_test(DT, queue);
 };
 
-//добавление точки в треугольник по номеру
+//add point in triangle by its id
 void add_point_to_face(DTriangle &DT, const vertex &q, int t_ind, const int &link)
 {
 	//проверка на наложение с ребром, переход к add_point_to_edge
